@@ -1,5 +1,9 @@
 # SemUmReal Mobile
 
+<p align="center">
+  <img src="docs/home.png" alt="Home do SemUmReal: resumo da conta e transações recentes" width="320" />
+</p>
+
 App mobile do **SemUmReal**, sistema de controle financeiro. Cliente React Native (Expo) para o backend Spring Boot — visual pixel art, P&B, feito para uso no bolso.
 
 > *Seu dinheiro sem firula.*
