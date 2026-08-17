@@ -16,8 +16,8 @@ export function HomeScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.body}>
-        <Text style={styles.title}>SEMUMREAL</Text>
-        <Text style={styles.subtitle}>CONTROLE FINANCEIRO</Text>
+        <Text style={styles.title}>SEMUMREAl</Text>
+        <Text style={styles.subtitle}>SEU DINHEIRO SEM FIRULA</Text>
 
         <View style={styles.card}>
           <View style={[styles.corner, styles.cornerTl]} />
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     color: color.ink,
     letterSpacing: letterSpacing.wide,
     marginBottom: space[1],
+    textAlign: 'center',
   },
   subtitle: {
     fontFamily: fontFamily.pixel,
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
     color: color.muted,
     letterSpacing: letterSpacing.tight,
     marginBottom: space[3],
+    textAlign: 'center',
   },
   card: {
     backgroundColor: color.panel,
