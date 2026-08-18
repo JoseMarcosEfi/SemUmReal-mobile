@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
 import { ApiError } from '../../api/http';
 import { useAuth } from '../../auth/auth-context';
-import { color, space } from '../../theme';
+import { color } from '../../theme';
 import { AuthButton, AuthError, AuthField, AuthGoogleButton, AuthLayout, AuthLink } from './auth-layout';
 import { validateEmail, validatePassword } from './validation';
 
@@ -16,6 +16,14 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    setError(null);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setRefreshing(false);
+  }
 
   async function onSubmit() {
     const emailError = validateEmail(email);
@@ -40,10 +48,14 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
   return (
     <AuthLayout
       backgroundColor={color.loginSky}
+      refreshing={refreshing}
+      onRefresh={() => {
+        void onRefresh();
+      }}
       footer={<AuthLink label="CRIAR CONTA" onPress={onGoToRegister} />}
       banner={
         <Image
-          source={require('../../../assets/login-game.jpg')}
+          source={require('../../assets/login-game.jpg')}
           accessibilityLabel="Protótipo do joguinho"
           resizeMode="cover"
           style={styles.gameArt}
@@ -82,6 +94,5 @@ const styles = StyleSheet.create({
     marginLeft: -40,
     marginTop: 80,
     marginBottom: 10,
-
   },
 });

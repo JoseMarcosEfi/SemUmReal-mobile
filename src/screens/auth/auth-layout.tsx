@@ -1,8 +1,11 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
+  PanResponder,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,13 +28,56 @@ type AuthLayoutProps = {
   footer?: ReactNode;
   banner?: ReactNode;
   backgroundColor?: string;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 };
+
+function ElasticScreen({ children }: { children: ReactNode }) {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Math.abs(gesture.dy) > 8 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+      onPanResponderMove: (_, gesture) => {
+        translateY.setValue(gesture.dy / 2.4);
+      },
+      onPanResponderRelease: () => {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 6,
+          tension: 70,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 6,
+          tension: 70,
+        }).start();
+      },
+    }),
+  ).current;
+
+  return (
+    <Animated.View
+      style={[styles.flex, { transform: [{ translateY }] }]}
+      {...panResponder.panHandlers}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 export function AuthLayout({
   children,
   footer,
   banner,
   backgroundColor = color.paper,
+  refreshing = false,
+  onRefresh,
 }: AuthLayoutProps) {
   const insets = useSafeAreaInsets();
 
@@ -40,20 +86,36 @@ export function AuthLayout({
       style={[styles.flex, { backgroundColor }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        style={[styles.flex, { backgroundColor }]}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, space[3]) },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>SEMUMREAl</Text>
-        <Text style={styles.subtitle}>SEU DINHEIRO SEM FIRULA</Text>
-        {children}
-        {footer}
-        {banner}
-      </ScrollView>
+      <ElasticScreen>
+        <ScrollView
+          style={[styles.flex, { backgroundColor }]}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: Math.max(insets.bottom, space[3]) },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          bounces
+          alwaysBounceVertical
+          overScrollMode="always"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={color.ink}
+                colors={[color.ink]}
+                progressBackgroundColor={backgroundColor}
+              />
+            ) : undefined
+          }
+        >
+          <Text style={styles.title}>SEMUMREAl</Text>
+          <Text style={styles.subtitle}>SEU DINHEIRO SEM FIRULA</Text>
+          {children}
+          {footer}
+          {banner}
+        </ScrollView>
+      </ElasticScreen>
     </KeyboardAvoidingView>
   );
 }
