@@ -46,7 +46,6 @@ export function AuthLayout({ children, footer }: AuthLayoutProps) {
         <Text style={styles.subtitle}>SEU DINHEIRO SEM FIRULA</Text>
         {children}
         {footer}
-        {__DEV__ ? <Text style={styles.debug}>{getApiBaseUrl()}</Text> : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );

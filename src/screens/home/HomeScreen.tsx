@@ -12,7 +12,11 @@ import {
 } from '../../theme';
 import { formatBRL, homeMock } from './home-mock';
 
-export function HomeScreen() {
+type HomeScreenProps = {
+  onGoProfile: () => void;
+};
+
+export function HomeScreen({ onGoProfile }: HomeScreenProps) {
   return (
     <View style={styles.screen}>
       <View style={styles.body}>
@@ -58,7 +62,10 @@ export function HomeScreen() {
         ))}
       </View>
 
-      <TabBar />
+      <TabBar
+        active="home"
+        onTabPress={(tab) => tab === 'user' && onGoProfile()}
+      />
     </View>
   );
 }

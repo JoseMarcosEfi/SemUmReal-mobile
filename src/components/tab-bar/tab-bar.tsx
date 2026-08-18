@@ -11,11 +11,14 @@ const TABS = [
   { name: 'user', label: 'Perfil' },
 ] as const satisfies ReadonlyArray<{ name: PixelIconName; label: string }>;
 
+export type AppTab = (typeof TABS)[number]['name'];
+
 type TabBarProps = {
-  active?: PixelIconName;
+  active?: AppTab;
+  onTabPress?: (name: AppTab) => void;
 };
 
-export function TabBar({ active = 'home' }: TabBarProps) {
+export function TabBar({ active = 'home', onTabPress }: TabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -27,6 +30,7 @@ export function TabBar({ active = 'home' }: TabBarProps) {
           accessibilityRole="button"
           accessibilityLabel={tab.label}
           accessibilityState={{ selected: tab.name === active }}
+          onPress={() => onTabPress?.(tab.name)}
         >
           <PixelIcon
             name={tab.name}

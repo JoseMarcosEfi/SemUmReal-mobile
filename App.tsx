@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './src/auth/auth-context';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { HomeScreen } from './src/screens/home/HomeScreen';
+import { ProfileScreen } from './src/screens/profile/ProfileScreen';
 import { color } from './src/theme';
 
 export default function App() {
@@ -34,10 +35,20 @@ function AppShell() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      {isAuthenticated ? <HomeScreen /> : <AuthFlow />}
+      {isAuthenticated ? <MainFlow /> : <AuthFlow />}
       <StatusBar style="dark" />
     </SafeAreaView>
   );
+}
+
+function MainFlow() {
+  const [screen, setScreen] = useState<'home' | 'profile'>('home');
+
+  if (screen === 'profile') {
+    return <ProfileScreen onGoHome={() => setScreen('home')} />;
+  }
+
+  return <HomeScreen onGoProfile={() => setScreen('profile')} />;
 }
 
 function AuthFlow() {
