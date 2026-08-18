@@ -11,7 +11,6 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getApiBaseUrl } from '../../api/config';
 import {
   border,
   color,
@@ -24,18 +23,25 @@ import {
 type AuthLayoutProps = {
   children: ReactNode;
   footer?: ReactNode;
+  banner?: ReactNode;
+  backgroundColor?: string;
 };
 
-export function AuthLayout({ children, footer }: AuthLayoutProps) {
+export function AuthLayout({
+  children,
+  footer,
+  banner,
+  backgroundColor = color.paper,
+}: AuthLayoutProps) {
   const insets = useSafeAreaInsets();
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      style={[styles.flex, { backgroundColor }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        style={styles.flex}
+        style={[styles.flex, { backgroundColor }]}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: Math.max(insets.bottom, space[3]) },
@@ -46,6 +52,7 @@ export function AuthLayout({ children, footer }: AuthLayoutProps) {
         <Text style={styles.subtitle}>SEU DINHEIRO SEM FIRULA</Text>
         {children}
         {footer}
+        {banner}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -105,6 +112,20 @@ export function AuthButton({ label, onPress, disabled }: AuthButtonProps) {
       ]}
     >
       <Text style={styles.buttonLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function AuthGoogleButton() {
+  return (
+    <Pressable
+      disabled
+      accessibilityRole="button"
+      accessibilityLabel="Login com Google"
+      accessibilityState={{ disabled: true }}
+      style={[styles.googleButton, styles.buttonDisabled]}
+    >
+      <Text style={styles.googleLabel}>Login com Google</Text>
     </Pressable>
   );
 }
@@ -179,7 +200,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: space[1],
-    marginBottom: space[3],
+    marginBottom: space[2],
   },
   buttonPressed: {
     backgroundColor: color.panel,
@@ -191,6 +212,22 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.pixel,
     fontSize: fontSize.sm,
     color: color.paper,
+    letterSpacing: letterSpacing.wide,
+  },
+  googleButton: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.paper,
+    borderWidth: border.width,
+    borderColor: color.line,
+    paddingHorizontal: space[1],
+    marginBottom: space[3],
+  },
+  googleLabel: {
+    fontFamily: fontFamily.pixel,
+    fontSize: fontSize.sm,
+    color: color.ink,
     letterSpacing: letterSpacing.wide,
   },
   link: {
@@ -206,15 +243,6 @@ const styles = StyleSheet.create({
     color: color.ink,
     letterSpacing: letterSpacing.tight,
     marginBottom: space[2],
-    lineHeight: 16,
-  },
-  debug: {
-    fontFamily: fontFamily.pixel,
-    fontSize: fontSize.xs,
-    color: color.muted,
-    letterSpacing: letterSpacing.tight,
-    textAlign: 'center',
-    marginTop: space[3],
     lineHeight: 16,
   },
 });

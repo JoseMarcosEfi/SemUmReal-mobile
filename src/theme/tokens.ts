@@ -7,6 +7,8 @@ export const color = {
   panel: '#3a3a3a',
   stage: '#cfcfcf',
   line: '#111111',
+  /** Céu da arte do login (`login-game.jpg`). */
+  loginSky: '#E3E3E3',
 } as const;
 
 export const space = {

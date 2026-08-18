@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Image, StyleSheet } from 'react-native';
 import { ApiError } from '../../api/http';
 import { useAuth } from '../../auth/auth-context';
-import { AuthButton, AuthError, AuthField, AuthLayout, AuthLink } from './auth-layout';
+import { color, space } from '../../theme';
+import { AuthButton, AuthError, AuthField, AuthGoogleButton, AuthLayout, AuthLink } from './auth-layout';
 import { validateEmail, validatePassword } from './validation';
 
 type LoginScreenProps = {
@@ -37,7 +39,16 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
 
   return (
     <AuthLayout
+      backgroundColor={color.loginSky}
       footer={<AuthLink label="CRIAR CONTA" onPress={onGoToRegister} />}
+      banner={
+        <Image
+          source={require('../../../assets/login-game.jpg')}
+          accessibilityLabel="Protótipo do joguinho"
+          resizeMode="cover"
+          style={styles.gameArt}
+        />
+      }
     >
       <AuthField
         label="E-MAIL"
@@ -59,6 +70,18 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
       />
       <AuthError message={error} />
       <AuthButton label={busy ? 'ENTRANDO...' : 'ENTRAR'} onPress={onSubmit} disabled={busy} />
+      <AuthGoogleButton />
     </AuthLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  gameArt: {
+    width: '120%',
+    height: '50%',
+    marginLeft: -40,
+    marginTop: 80,
+    marginBottom: 10,
+
+  },
+});

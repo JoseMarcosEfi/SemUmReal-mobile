@@ -28,14 +28,24 @@ export default function App() {
 
 function AppShell() {
   const { isReady, isAuthenticated } = useAuth();
+  const [authScreen, setAuthScreen] = useState<'login' | 'register'>('login');
 
   if (!isReady) {
     return <View style={styles.boot} />;
   }
 
+  const backgroundColor =
+    !isAuthenticated && authScreen === 'login' ? color.loginSky : color.paper;
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      {isAuthenticated ? <MainFlow /> : <AuthFlow />}
+    <SafeAreaView style={[styles.safe, { backgroundColor }]} edges={['top', 'left', 'right']}>
+      {isAuthenticated ? (
+        <MainFlow />
+      ) : authScreen === 'register' ? (
+        <RegisterScreen onGoToLogin={() => setAuthScreen('login')} />
+      ) : (
+        <LoginScreen onGoToRegister={() => setAuthScreen('register')} />
+      )}
       <StatusBar style="dark" />
     </SafeAreaView>
   );
@@ -49,16 +59,6 @@ function MainFlow() {
   }
 
   return <HomeScreen onGoProfile={() => setScreen('profile')} />;
-}
-
-function AuthFlow() {
-  const [screen, setScreen] = useState<'login' | 'register'>('login');
-
-  if (screen === 'register') {
-    return <RegisterScreen onGoToLogin={() => setScreen('login')} />;
-  }
-
-  return <LoginScreen onGoToRegister={() => setScreen('register')} />;
 }
 
 const styles = StyleSheet.create({
