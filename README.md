@@ -1,7 +1,9 @@
 # SemUmReal Mobile
 
 <p align="center">
-  <img src="docs/home.png" alt="Home do SemUmReal: resumo da conta e transações recentes" width="320" />
+  <img src="docs/login.jpg" alt="Login do SemUmReal: e-mail, senha e arte pixel do joguinho" width="280" />
+  &nbsp;
+  <img src="docs/home.png" alt="Home do SemUmReal: resumo da conta e transações recentes" width="280" />
 </p>
 
 App mobile do **SemUmReal**, sistema de controle financeiro. Cliente React Native (Expo) para o backend Spring Boot — visual pixel art, P&B, feito para uso no bolso.
@@ -10,12 +12,14 @@ App mobile do **SemUmReal**, sistema de controle financeiro. Cliente React Nativ
 
 Este repositório é o app **Android / iOS** (Expo Go). Faz parte do mesmo produto que a [API](https://github.com/JoseMarcosEfi) (hexagonal / DDD) e o front web Angular.
 
-Status atual: **UI da Home com dados mock**. Ainda não consome a API. Projeto de estudo e portfólio.
+Status atual: **login e cadastro contra a API** (JWT no dispositivo). A Home ainda usa dados mock. Projeto de estudo e portfólio.
 
 ## Screens
 
+- **Login** — e-mail + senha, cadastro, botão Google (ainda inativo) e arte do futuro joguinho
 - **Home** — resumo da conta (gastos do mês + total geral) e transações recentes
-- **Tab bar** — Início, Transações, Novo, Relatórios, Perfil (navegação ainda visual)
+- **Perfil** — logout local (sem endpoint na API)
+- **Tab bar** — Início e Perfil navegam; Transações, Novo e Relatórios ainda visuais
 
 Dados de exemplo na Home: café, Uber, mercado — valores em BRL.
 
@@ -35,13 +39,17 @@ Design tokens (`src/theme/tokens.ts`) espelham o `styles.scss` do Angular: mesma
 ## Estrutura
 
 ```
-App.tsx                         # fonte + safe area + tela inicial
+App.tsx                         # fonte + gate de sessão + telas
 src/
+├── api/                        # cliente HTTP + auth (login/register/me)
+├── auth/                       # JWT (SecureStore) + Context
 ├── theme/                      # tokens (cor, espaço, fonte)
 ├── screens/
-│   └── home/
-│       ├── HomeScreen.tsx      # tela da Home
-│       └── home-mock.ts        # dados fake (BRL)
+│   ├── auth/                   # login e cadastro
+│   ├── home/
+│   │   ├── HomeScreen.tsx
+│   │   └── home-mock.ts        # dados fake (BRL)
+│   └── profile/                # logout
 └── components/
     ├── pixel-icon/             # ícones pixel (nativo + .web)
     └── tab-bar/                # barra inferior
@@ -71,14 +79,16 @@ Se o QR não conectar (firewall), libere a porta **8081 TCP** na rede particular
 
 ```bash
 adb reverse tcp:8081 tcp:8081
+adb reverse tcp:8080 tcp:8080
 ```
 
-Depois, no Expo Go: `exp://127.0.0.1:8081`.
+Depois, no Expo Go: `exp://127.0.0.1:8081`.  
+A API local (`./mvnw spring-boot:run -Dspring-boot.run.profiles=local`) precisa da **8080** encaminhada no USB.
 
 ## Próximos passos
 
 - Navegação real nas tabs (React Navigation)
-- Login / JWT contra o backend Spring
+- Login com Google
 - Trocar `home-mock.ts` por chamadas REST
 
 ## Autor
