@@ -7,11 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { fetchMe, login, registerUser } from '../api/auth';
+import { fetchMe, login, loginWithGoogle, registerUser } from '../api/auth';
 import { ApiError } from '../api/http';
 import { setOnUnauthorized } from '../api/session';
+import { shouldUseNativeGoogleSignIn } from './google-config';
+import { signOutNativeGoogle } from './native-google-sign-in';
 import { deleteToken, getToken, saveToken } from './token-store';
-import type { User } from './types';
+import type { LoginResponse, User } from './types';
 
 type AuthContextValue = {
   user: User | null;
@@ -19,6 +21,7 @@ type AuthContextValue = {
   isReady: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (idToken: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -31,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   const signOut = useCallback(async () => {
+    if (shouldUseNativeGoogleSignIn()) {
+      await signOutNativeGoogle();
+    }
     await deleteToken();
     setToken(null);
     setUser(null);
@@ -65,8 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setOnUnauthorized(null);
   }, [signOut]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const response = await login(email, password);
+  const persistSession = useCallback(async (response: LoginResponse) => {
     await saveToken(response.token);
     setToken(response.token);
     setUser(response.user);
@@ -83,6 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      await persistSession(await login(email, password));
+    },
+    [persistSession],
+  );
+
+  const signInWithGoogle = useCallback(
+    async (idToken: string) => {
+      await persistSession(await loginWithGoogle(idToken));
+    },
+    [persistSession],
+  );
+
   const signUp = useCallback(
     async (name: string, email: string, password: string) => {
       await registerUser(name, email, password);
@@ -98,10 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isReady,
       isAuthenticated: token !== null,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
     }),
-    [isReady, signIn, signOut, signUp, token, user],
+    [isReady, signIn, signInWithGoogle, signOut, signUp, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
