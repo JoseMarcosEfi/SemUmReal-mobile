@@ -178,16 +178,29 @@ export function AuthButton({ label, onPress, disabled }: AuthButtonProps) {
   );
 }
 
-export function AuthGoogleButton() {
+type AuthGoogleButtonProps = {
+  onPress: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+};
+
+export function AuthGoogleButton({ onPress, disabled, busy }: AuthGoogleButtonProps) {
+  const label = busy ? 'ENTRANDO...' : 'Login com Google';
+
   return (
     <Pressable
-      disabled
+      onPress={onPress}
+      disabled={disabled || busy}
       accessibilityRole="button"
       accessibilityLabel="Login com Google"
-      accessibilityState={{ disabled: true }}
-      style={[styles.googleButton, styles.buttonDisabled]}
+      accessibilityState={{ disabled: disabled || busy }}
+      style={({ pressed }) => [
+        styles.googleButton,
+        pressed && styles.googleButtonPressed,
+        (disabled || busy) && styles.buttonDisabled,
+      ]}
     >
-      <Text style={styles.googleLabel}>Login com Google</Text>
+      <Text style={styles.googleLabel}>{label}</Text>
     </Pressable>
   );
 }
@@ -285,6 +298,9 @@ const styles = StyleSheet.create({
     borderColor: color.line,
     paddingHorizontal: space[1],
     marginBottom: space[3],
+  },
+  googleButtonPressed: {
+    opacity: 0.7,
   },
   googleLabel: {
     fontFamily: fontFamily.pixel,

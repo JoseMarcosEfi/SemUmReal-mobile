@@ -10,13 +10,13 @@ App mobile do **SemUmReal**, sistema de controle financeiro. Cliente React Nativ
 
 > *Seu dinheiro sem firula.*
 
-Este repositório é o app **Android / iOS** (Expo Go). Faz parte do mesmo produto que a [API](https://github.com/JoseMarcosEfi) (hexagonal / DDD) e o front web Angular.
+Este repositório é o app **Android / iOS** (Expo SDK 54). Faz parte do mesmo produto que a [API](https://github.com/JoseMarcosEfi) (hexagonal / DDD) e o front web Angular.
 
-Status atual: **login e cadastro contra a API** (JWT no dispositivo). A Home ainda usa dados mock. Projeto de estudo e portfólio.
+Status atual: **login e cadastro contra a API** (JWT no dispositivo). Login com Google: **nativo no Android** (development build) e **AuthSession no web**. A Home ainda usa dados mock. Projeto de estudo e portfólio.
 
 ## Screens
 
-- **Login** — e-mail + senha, cadastro, botão Google (ainda inativo) e arte do futuro joguinho
+- **Login** — e-mail + senha, cadastro, login com Google e arte do futuro joguinho
 - **Home** — resumo da conta (gastos do mês + total geral) e transações recentes
 - **Perfil** — logout local (sem endpoint na API)
 - **Tab bar** — Início e Perfil navegam; Transações, Novo e Relatórios ainda visuais
@@ -27,7 +27,8 @@ Dados de exemplo na Home: café, Uber, mercado — valores em BRL.
 
 | | |
 |---|---|
-| Runtime | [Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/) |
+| Runtime | [Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/) + development build (`expo-dev-client`) |
+| Auth Google | ID token nativo (`@react-native-google-signin/google-signin`) no Android; AuthSession no web |
 | UI | React Native 0.81 + React 19 |
 | Linguagem | TypeScript |
 | Fonte | [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) |
@@ -61,7 +62,8 @@ src/
 
 - Node.js 20+
 - npm
-- [Expo Go](https://expo.dev/go) **SDK 54** no celular (Play Store / App Store)
+- [Android Studio](https://docs.expo.dev/workflow/android-studio-emulator/) (emulador ou celular com USB debugging) para o app nativo
+- Login com Google no celular **não funciona no Expo Go** — use o development build abaixo
 
 ### Instalação
 
@@ -69,26 +71,69 @@ src/
 git clone git@github.com:JoseMarcosEfi/SemUmReal-mobile.git
 cd SemUmReal-mobile
 npm install
+cp .env.example .env.local
+```
+
+Preencha `EXPO_PUBLIC_API_URL` e `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` no `.env.local`.
+
+### Android (development build)
+
+Na primeira vez (e depois de mudar plugin nativo / `app.json`):
+
+```bash
+npm run android
+```
+
+Isso gera o app nativo (`expo-dev-client` + Google Sign-In), instala no emulador/celular e sobe o Metro. Nas próximas vezes, com o app já instalado:
+
+```bash
 npx expo start
 ```
 
-No celular, abra o **Expo Go** e leia o QR (mesmo Wi-Fi do PC).  
-Web: `npx expo start --web`.
+Abra o app **semumreal** no aparelho (não o Expo Go) e conecte ao bundler.
 
-Se o QR não conectar (firewall), libere a porta **8081 TCP** na rede particular, ou use USB:
+Se a API roda na máquina (`http://127.0.0.1:8080`), no USB:
 
 ```bash
 adb reverse tcp:8081 tcp:8081
 adb reverse tcp:8080 tcp:8080
 ```
 
-Depois, no Expo Go: `exp://127.0.0.1:8081`.  
-A API local (`./mvnw spring-boot:run -Dspring-boot.run.profiles=local`) precisa da **8080** encaminhada no USB.
+### Web
+
+```bash
+npm run web
+```
+
+Login com Google no web usa o cliente OAuth **tipo Web** (redirect `http://localhost:...`).
+
+### Expo Go
+
+Dá para testar e-mail/senha no Expo Go (`npx expo start` + QR). O botão Google no celular explica que precisa do development build.
+
+## Login com Google
+
+O app pede um **ID token** ao Google e envia para `POST /api/auth/google`. A conta é criada ou vinculada no servidor; o JWT fica no dispositivo como no login com senha.
+
+1. No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), tenha:
+   - cliente OAuth **tipo Web** — vai em `.env.local` (`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`) e no backend (`app.google.client-ids`)
+   - cliente OAuth **tipo Android** — pacote `com.jmarcos.semumreal` + SHA-1 (e SHA-256) do `debug.keystore`. Esse ID **não** entra no `.env`
+2. SHA-1 de debug:
+
+```bash
+keytool -list -v -alias androiddebugkey \
+  -keystore "$HOME/.android/debug.keystore" \
+  -storepass android -keypass android
+```
+
+3. Reinicie o Metro depois de alterar o `.env.local`.
+4. No Android, use `npm run android`, não o Expo Go.
+
+No web, em *Authorized redirect URIs* do cliente Web, inclua `http://localhost:8081`.
 
 ## Próximos passos
 
 - Navegação real nas tabs (React Navigation)
-- Login com Google
 - Trocar `home-mock.ts` por chamadas REST
 
 ## Autor

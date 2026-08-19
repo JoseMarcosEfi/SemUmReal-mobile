@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ApiError } from '../../api/http';
 import { useAuth } from '../../auth/auth-context';
-import { AuthButton, AuthError, AuthField, AuthLayout, AuthLink } from './auth-layout';
+import { useGoogleIdTokenRequest } from '../../auth/use-google-id-token';
+import { toAuthErrorMessage } from './auth-errors';
+import { AuthButton, AuthError, AuthField, AuthGoogleButton, AuthLayout, AuthLink } from './auth-layout';
 import { validateEmail, validateName, validatePassword } from './validation';
 
 type RegisterScreenProps = {
@@ -9,12 +10,14 @@ type RegisterScreenProps = {
 };
 
 export function RegisterScreen({ onGoToLogin }: RegisterScreenProps) {
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
+  const { prompt: promptGoogle, isReady: googleReady } = useGoogleIdTokenRequest();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   async function onSubmit() {
     const message =
@@ -29,9 +32,29 @@ export function RegisterScreen({ onGoToLogin }: RegisterScreenProps) {
     try {
       await signUp(name, email, password);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Não foi possível cadastrar');
+      setError(toAuthErrorMessage(caught, 'Não foi possível cadastrar'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onGoogle() {
+    setGoogleBusy(true);
+    setError(null);
+    try {
+      const result = await promptGoogle();
+      if (result.type === 'cancelled') {
+        return;
+      }
+      if (result.type === 'error') {
+        setError(result.message);
+        return;
+      }
+      await signInWithGoogle(result.idToken);
+    } catch (caught) {
+      setError(toAuthErrorMessage(caught, 'Não foi possível entrar com o Google'));
+    } finally {
+      setGoogleBusy(false);
     }
   }
 
@@ -46,7 +69,7 @@ export function RegisterScreen({ onGoToLogin }: RegisterScreenProps) {
         autoCapitalize="words"
         autoComplete="name"
         textContentType="name"
-        editable={!busy}
+        editable={!busy && !googleBusy}
       />
       <AuthField
         label="E-MAIL"
@@ -55,7 +78,7 @@ export function RegisterScreen({ onGoToLogin }: RegisterScreenProps) {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
-        editable={!busy}
+        editable={!busy && !googleBusy}
       />
       <AuthField
         label="SENHA"
@@ -64,13 +87,20 @@ export function RegisterScreen({ onGoToLogin }: RegisterScreenProps) {
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"
-        editable={!busy}
+        editable={!busy && !googleBusy}
       />
       <AuthError message={error} />
       <AuthButton
         label={busy ? 'CADASTRANDO...' : 'CADASTRAR'}
         onPress={onSubmit}
-        disabled={busy}
+        disabled={busy || googleBusy}
+      />
+      <AuthGoogleButton
+        onPress={() => {
+          void onGoogle();
+        }}
+        disabled={!googleReady || busy}
+        busy={googleBusy}
       />
     </AuthLayout>
   );

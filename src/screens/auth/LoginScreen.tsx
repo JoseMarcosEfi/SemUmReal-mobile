@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
-import { ApiError } from '../../api/http';
 import { useAuth } from '../../auth/auth-context';
+import { useGoogleIdTokenRequest } from '../../auth/use-google-id-token';
 import { color } from '../../theme';
+import { toAuthErrorMessage } from './auth-errors';
 import { AuthButton, AuthError, AuthField, AuthGoogleButton, AuthLayout, AuthLink } from './auth-layout';
 import { validateEmail, validatePassword } from './validation';
 
@@ -11,11 +12,13 @@ type LoginScreenProps = {
 };
 
 export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
+  const { prompt: promptGoogle, isReady: googleReady } = useGoogleIdTokenRequest();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   async function onRefresh() {
@@ -39,9 +42,29 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
     try {
       await signIn(email, password);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Não foi possível entrar');
+      setError(toAuthErrorMessage(caught, 'Não foi possível entrar'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onGoogle() {
+    setGoogleBusy(true);
+    setError(null);
+    try {
+      const result = await promptGoogle();
+      if (result.type === 'cancelled') {
+        return;
+      }
+      if (result.type === 'error') {
+        setError(result.message);
+        return;
+      }
+      await signInWithGoogle(result.idToken);
+    } catch (caught) {
+      setError(toAuthErrorMessage(caught, 'Não foi possível entrar com o Google'));
+    } finally {
+      setGoogleBusy(false);
     }
   }
 
@@ -69,7 +92,7 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
-        editable={!busy}
+        editable={!busy && !googleBusy}
       />
       <AuthField
         label="SENHA"
@@ -78,11 +101,21 @@ export function LoginScreen({ onGoToRegister }: LoginScreenProps) {
         secureTextEntry
         autoComplete="password"
         textContentType="password"
-        editable={!busy}
+        editable={!busy && !googleBusy}
       />
       <AuthError message={error} />
-      <AuthButton label={busy ? 'ENTRANDO...' : 'ENTRAR'} onPress={onSubmit} disabled={busy} />
-      <AuthGoogleButton />
+      <AuthButton
+        label={busy ? 'ENTRANDO...' : 'ENTRAR'}
+        onPress={onSubmit}
+        disabled={busy || googleBusy}
+      />
+      <AuthGoogleButton
+        onPress={() => {
+          void onGoogle();
+        }}
+        disabled={!googleReady || busy}
+        busy={googleBusy}
+      />
     </AuthLayout>
   );
 }
