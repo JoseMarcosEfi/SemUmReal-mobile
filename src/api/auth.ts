@@ -17,6 +17,14 @@ export function login(email: string, password: string): Promise<LoginResponse> {
   });
 }
 
+export function loginWithGoogle(idToken: string): Promise<LoginResponse> {
+  return request<LoginResponse>('/api/auth/google', {
+    method: 'POST',
+    auth: false,
+    body: { idToken },
+  });
+}
+
 export function fetchMe(): Promise<User> {
   return request<User>('/api/auth/me');
 }
