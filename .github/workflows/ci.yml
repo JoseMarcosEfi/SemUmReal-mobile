@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+
+# Uma nova execucao cancela a anterior do mesmo PR/branch
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Type check, lint e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Expo SDK 54 exige Node >= 20.19
+          node-version: '20.19.4'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      # Os passos abaixo so rodam quando os scripts existirem no package.json
+      - name: Detectar scripts opcionais
+        id: scripts
+        run: |
+          has_lint=$(node -p "!!(require('./package.json').scripts||{}).lint")
+          has_test=$(node -p "!!(require('./package.json').scripts||{}).test")
+          echo "lint=$has_lint" >> "$GITHUB_OUTPUT"
+          echo "test=$has_test" >> "$GITHUB_OUTPUT"
+
+      - name: Lint
+        if: steps.scripts.outputs.lint == 'true'
+        run: npm run lint
+
+      - name: Testes
+        if: steps.scripts.outputs.test == 'true'
+        run: npm test
